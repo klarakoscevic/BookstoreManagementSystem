@@ -1,0 +1,68 @@
+using BookstoreManagementSystem.DTOs;
+using BookstoreManagementSystem.Services;
+using Microsoft.AspNetCore.Mvc;
+
+namespace BookstoreManagementSystem.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class AuthorsController : ControllerBase
+{
+    private readonly IAuthorService _authorService;
+
+    public AuthorsController(IAuthorService authorService)
+    {
+        _authorService = authorService;
+    }
+
+    /// <summary>
+    /// Get all authors
+    /// </summary>
+    [HttpGet]
+    public async Task<ActionResult<List<AuthorDto>>> GetAllAuthors()
+    {
+        var authors = await _authorService.GetAllAuthorsAsync();
+        return Ok(authors);
+    }
+
+    /// <summary>
+    /// Get a specific author by ID
+    /// </summary>
+    [HttpGet("{id}")]
+    public async Task<ActionResult<AuthorDto>> GetAuthor(int id)
+    {
+        var author = await _authorService.GetAuthorByIdAsync(id);
+
+        if (author == null)
+            return NotFound(new { message = $"Author with ID {id} not found" });
+
+        return Ok(author);
+    }
+
+    /// <summary>
+    /// Create a new author
+    /// </summary>
+    [HttpPost]
+    public async Task<ActionResult<AuthorDto>> CreateAuthor([FromBody] CreateAuthorDto createAuthorDto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var author = await _authorService.CreateAuthorAsync(createAuthorDto);
+        return CreatedAtAction(nameof(GetAuthor), new { id = author.Id }, author);
+    }
+
+    /// <summary>
+    /// Delete an author (soft delete)
+    /// </summary>
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteAuthor(int id)
+    {
+        var result = await _authorService.DeleteAuthorAsync(id);
+
+        if (!result)
+            return NotFound(new { message = $"Author with ID {id} not found" });
+
+        return NoContent();
+    }
+}
