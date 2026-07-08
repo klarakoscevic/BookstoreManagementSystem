@@ -1,0 +1,6 @@
+@BookstoreManagementSystem_HostAddress = http://localhost:5228
+
+GET {{BookstoreManagementSystem_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
