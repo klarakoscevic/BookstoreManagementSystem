@@ -1,4 +1,6 @@
 using BookstoreManagementSystem.Data;
+using BookstoreManagementSystem.Repositories;
+using BookstoreManagementSystem.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
@@ -8,6 +10,16 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddDbContext<BookstoreDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register repositories
+builder.Services.AddScoped<IGenreRepository, GenreRepository>();
+builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
+builder.Services.AddScoped<IBookRepository, BookRepository>();
+
+// Register services
+builder.Services.AddScoped<IGenreService, GenreService>();
+builder.Services.AddScoped<IAuthorService, AuthorService>();
+builder.Services.AddScoped<IBookService, BookService>();
 
 builder.Services.AddControllers();
 
@@ -48,6 +60,10 @@ using (var scope = app.Services.CreateScope())
         logger.LogInformation("Applying database migrations...");
         dbContext.Database.Migrate();
         logger.LogInformation("Database migrations applied successfully");
+
+        // Seed initial data
+        await SeedData.InitializeAsync(scope.ServiceProvider);
+        logger.LogInformation("Database seeding completed");
     }
     catch (Exception ex)
     {
