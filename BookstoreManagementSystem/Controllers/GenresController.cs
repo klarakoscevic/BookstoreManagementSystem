@@ -1,11 +1,13 @@
 using BookstoreManagementSystem.DTOs;
 using BookstoreManagementSystem.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookstoreManagementSystem.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class GenresController : ControllerBase
 {
     private readonly IGenreService _genreService;
@@ -43,6 +45,7 @@ public class GenresController : ControllerBase
     /// Create a new genre
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = "ReadWrite")]
     public async Task<ActionResult<GenreDto>> CreateGenre([FromBody] CreateGenreDto createGenreDto)
     {
         if (!ModelState.IsValid)
@@ -56,6 +59,7 @@ public class GenresController : ControllerBase
     /// Delete a genre (soft delete)
     /// </summary>
     [HttpDelete("{id}")]
+    [Authorize(Roles = "ReadWrite")]
     public async Task<IActionResult> DeleteGenre(int id)
     {
         var result = await _genreService.DeleteGenreAsync(id);

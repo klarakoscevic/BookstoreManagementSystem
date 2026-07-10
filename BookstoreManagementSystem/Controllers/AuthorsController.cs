@@ -1,11 +1,13 @@
 using BookstoreManagementSystem.DTOs;
 using BookstoreManagementSystem.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookstoreManagementSystem.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class AuthorsController : ControllerBase
 {
     private readonly IAuthorService _authorService;
@@ -43,6 +45,7 @@ public class AuthorsController : ControllerBase
     /// Create a new author
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = "ReadWrite")]
     public async Task<ActionResult<AuthorDto>> CreateAuthor([FromBody] CreateAuthorDto createAuthorDto)
     {
         if (!ModelState.IsValid)
@@ -56,6 +59,7 @@ public class AuthorsController : ControllerBase
     /// Delete an author (soft delete)
     /// </summary>
     [HttpDelete("{id}")]
+    [Authorize(Roles = "ReadWrite")]
     public async Task<IActionResult> DeleteAuthor(int id)
     {
         var result = await _authorService.DeleteAuthorAsync(id);

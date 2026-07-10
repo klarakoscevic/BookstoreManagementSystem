@@ -1,11 +1,13 @@
 using BookstoreManagementSystem.DTOs;
 using BookstoreManagementSystem.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookstoreManagementSystem.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ReviewsController : ControllerBase
 {
     private readonly IReviewService _reviewService;
@@ -55,6 +57,7 @@ public class ReviewsController : ControllerBase
     /// Create a new review
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = "ReadWrite")]
     public async Task<ActionResult<ReviewDto>> CreateReview([FromBody] CreateReviewDto createReviewDto)
     {
         var review = await _reviewService.CreateReviewAsync(createReviewDto);
@@ -71,6 +74,7 @@ public class ReviewsController : ControllerBase
     /// Update an existing review
     /// </summary>
     [HttpPut("{id}")]
+    [Authorize(Roles = "ReadWrite")]
     public async Task<ActionResult<ReviewDto>> UpdateReview(int id, [FromBody] UpdateReviewDto updateReviewDto)
     {
         var review = await _reviewService.UpdateReviewAsync(id, updateReviewDto);
@@ -87,6 +91,7 @@ public class ReviewsController : ControllerBase
     /// Delete a review (soft delete)
     /// </summary>
     [HttpDelete("{id}")]
+    [Authorize(Roles = "ReadWrite")]
     public async Task<IActionResult> DeleteReview(int id)
     {
         var result = await _reviewService.DeleteReviewAsync(id);

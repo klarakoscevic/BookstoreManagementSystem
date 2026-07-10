@@ -1,11 +1,13 @@
 using BookstoreManagementSystem.DTOs;
 using BookstoreManagementSystem.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookstoreManagementSystem.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize] // All endpoints require authentication
 public class BooksController : ControllerBase
 {
     private readonly IBookService _bookService;
@@ -53,6 +55,7 @@ public class BooksController : ControllerBase
     /// Create a new book
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = "ReadWrite")]
     public async Task<ActionResult<BookDto>> CreateBook([FromBody] CreateBookDto createBookDto)
     {
         if (!ModelState.IsValid)
@@ -66,6 +69,7 @@ public class BooksController : ControllerBase
     /// Update book price only
     /// </summary>
     [HttpPut("{id}/price")]
+    [Authorize(Roles = "ReadWrite")]
     public async Task<ActionResult<BookDto>> UpdateBookPrice(int id, [FromBody] UpdateBookPriceDto updateBookPriceDto)
     {
         if (!ModelState.IsValid)
@@ -83,6 +87,7 @@ public class BooksController : ControllerBase
     /// Delete a book (soft delete)
     /// </summary>
     [HttpDelete("{id}")]
+    [Authorize(Roles = "ReadWrite")]
     public async Task<IActionResult> DeleteBook(int id)
     {
         var result = await _bookService.DeleteBookAsync(id);

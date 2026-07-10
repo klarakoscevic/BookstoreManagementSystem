@@ -11,13 +11,26 @@ public static class SeedData
         using var context = new BookstoreDbContext(
             serviceProvider.GetRequiredService<DbContextOptions<BookstoreDbContext>>());
 
+        // Seed Roles first - ALWAYS check/seed roles independently
+        if (!await context.Roles.AnyAsync())
+        {
+            var roles = new Role[]
+            {
+                new() { Name = "Read", Description = "Can access GET endpoints only" },
+                new() { Name = "ReadWrite", Description = "Can access all endpoints" }
+            };
+
+            context.Roles.AddRange(roles);
+            await context.SaveChangesAsync();
+        }
+
         // Check if data already exists
         if (await context.Books.AnyAsync() || await context.Authors.AnyAsync())
         {
             return; // Database has been seeded
         }
 
-        // Seed Genres first
+        // Seed Genres
         var genres = new Genre[]
         {
             new() { Name = "Fantasy" },
