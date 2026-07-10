@@ -15,11 +15,13 @@ builder.Services.AddDbContext<BookstoreDbContext>(options =>
 builder.Services.AddScoped<IGenreRepository, GenreRepository>();
 builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 
 // Register services
 builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<IAuthorService, AuthorService>();
 builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 builder.Services.AddControllers();
 
