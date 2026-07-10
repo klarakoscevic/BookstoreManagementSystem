@@ -9,4 +9,5 @@ public interface IBookService
     Task<BookDto> CreateBookAsync(CreateBookDto createBookDto);
     Task<BookDto?> UpdateBookPriceAsync(int id, UpdateBookPriceDto updateBookPriceDto);
     Task<bool> DeleteBookAsync(int id);
+    Task<List<TopBookDto>> GetTop10BooksByRatingAsync();
 }

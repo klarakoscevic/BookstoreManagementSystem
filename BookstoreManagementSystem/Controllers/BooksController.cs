@@ -26,6 +26,16 @@ public class BooksController : ControllerBase
     }
 
     /// <summary>
+    /// Get top 10 books by average rating (using raw SQL)
+    /// </summary>
+    [HttpGet("top10")]
+    public async Task<ActionResult<List<TopBookDto>>> GetTop10Books()
+    {
+        var books = await _bookService.GetTop10BooksByRatingAsync();
+        return Ok(books);
+    }
+
+    /// <summary>
     /// Get a specific book by ID
     /// </summary>
     [HttpGet("{id}")]

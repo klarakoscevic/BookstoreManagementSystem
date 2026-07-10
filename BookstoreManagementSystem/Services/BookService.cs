@@ -50,6 +50,11 @@ public class BookService : IBookService
         return await _bookRepository.DeleteBookAsync(id);
     }
 
+    public async Task<List<TopBookDto>> GetTop10BooksByRatingAsync()
+    {
+        return await _bookRepository.GetTop10BooksByRatingAsync();
+    }
+
     private static BookDto MapToDto(Book book)
     {
         return new BookDto

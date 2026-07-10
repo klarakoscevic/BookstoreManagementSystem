@@ -1,4 +1,5 @@
 using BookstoreManagementSystem.Data;
+using BookstoreManagementSystem.DTOs;
 using BookstoreManagementSystem.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -93,5 +94,44 @@ public class BookRepository : IBookRepository
     public async Task<bool> BookExistsAsync(int id)
     {
         return await _context.Books.AnyAsync(b => b.Id == id);
+    }
+
+    public async Task<List<TopBookDto>> GetTop10BooksByRatingAsync()
+    {
+        var sql = @"
+         SELECT TOP 10 
+             b.Id,
+             b.Title,
+             b.Price,
+             ISNULL(AVG(CAST(r.Rating AS FLOAT)), 0) AS AverageReviewRating,
+             ISNULL((
+                 SELECT STRING_AGG(a.Name, ', ')
+                 FROM (
+                     SELECT DISTINCT a.Name
+                     FROM BookAuthors ba
+                     INNER JOIN Authors a ON ba.AuthorsId = a.Id
+                     WHERE ba.BooksId = b.Id AND a.IsActive = 1
+                 ) a
+             ), '') AS AuthorNames,
+             ISNULL((
+                 SELECT STRING_AGG(g.Name, ', ')
+                 FROM (
+                     SELECT DISTINCT g.Name
+                     FROM BookGenres bg
+                     INNER JOIN Genres g ON bg.GenresId = g.Id
+                     WHERE bg.BooksId = b.Id AND g.IsActive = 1
+                 ) g
+             ), '') AS GenreNames
+         FROM Books b
+         LEFT JOIN Reviews r ON b.Id = r.BookId AND r.IsActive = 1
+         WHERE b.IsActive = 1
+         GROUP BY b.Id, b.Title, b.Price
+         ORDER BY AverageReviewRating DESC, b.Title";
+
+        var result = await _context.Database
+            .SqlQueryRaw<TopBookDto>(sql)
+            .ToListAsync();
+
+        return result;
     }
 }

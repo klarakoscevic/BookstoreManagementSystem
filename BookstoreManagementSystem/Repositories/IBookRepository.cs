@@ -1,3 +1,4 @@
+using BookstoreManagementSystem.DTOs;
 using BookstoreManagementSystem.Models;
 
 namespace BookstoreManagementSystem.Repositories;
@@ -10,4 +11,5 @@ public interface IBookRepository
     Task<Book?> UpdateBookPriceAsync(int id, decimal price);
     Task<bool> DeleteBookAsync(int id);
     Task<bool> BookExistsAsync(int id);
+    Task<List<TopBookDto>> GetTop10BooksByRatingAsync();
 }
