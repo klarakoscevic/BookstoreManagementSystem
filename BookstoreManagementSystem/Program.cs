@@ -2,6 +2,7 @@ using BookstoreManagementSystem.Data;
 using BookstoreManagementSystem.Repositories;
 using BookstoreManagementSystem.Services;
 using BookstoreManagementSystem.Middleware;
+using BookstoreManagementSystem.Jobs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Serilog;
+using Quartz;
 
 // Configure Serilog early
 Log.Logger = new LoggerConfiguration()
@@ -47,6 +49,27 @@ try
     builder.Services.AddScoped<IBookService, BookService>();
     builder.Services.AddScoped<IReviewService, ReviewService>();
     builder.Services.AddScoped<IAuthService, AuthService>();
+    builder.Services.AddScoped<IBookImportService, BookImportService>();
+
+    // Configure Quartz.NET for scheduled tasks
+    builder.Services.AddQuartz(q =>
+    {
+        // Create a "key" for the job
+        var jobKey = new JobKey("BookImportJob");
+
+        // Register the job with DI container
+        q.AddJob<BookImportJob>(opts => opts.WithIdentity(jobKey));
+
+        // Create a trigger for the job - runs every hour
+        q.AddTrigger(opts => opts
+            .ForJob(jobKey)
+            .WithIdentity("BookImportJob-trigger")
+            .WithCronSchedule("0 0 * * * ?") // Every hour at minute 0
+            .WithDescription("Triggers book import every hour"));
+    });
+
+    // Add Quartz.NET hosted service
+    builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
     // Configure JWT Authentication
     var jwtSettings = builder.Configuration.GetSection("JwtSettings");
