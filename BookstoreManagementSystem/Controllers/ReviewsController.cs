@@ -11,10 +11,12 @@ namespace BookstoreManagementSystem.Controllers;
 public class ReviewsController : ControllerBase
 {
     private readonly IReviewService _reviewService;
+    private readonly ILogger<ReviewsController> _logger;
 
-    public ReviewsController(IReviewService reviewService)
+    public ReviewsController(IReviewService reviewService, ILogger<ReviewsController> logger)
     {
         _reviewService = reviewService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -47,6 +49,8 @@ public class ReviewsController : ControllerBase
 
         if (review == null)
         {
+            var username = User.Identity?.Name ?? "Unknown";
+            _logger.LogWarning("Review with Id: {ReviewId} not found for user {Username}", id, username);
             return NotFound();
         }
 
@@ -60,10 +64,20 @@ public class ReviewsController : ControllerBase
     [Authorize(Roles = "ReadWrite")]
     public async Task<ActionResult<ReviewDto>> CreateReview([FromBody] CreateReviewDto createReviewDto)
     {
+        var username = User.Identity?.Name ?? "Unknown";
+
+        if (!ModelState.IsValid)
+        {
+            _logger.LogWarning("Invalid model state for CreateReview by user {Username}", username);
+            return BadRequest(ModelState);
+        }
+
         var review = await _reviewService.CreateReviewAsync(createReviewDto);
 
         if (review == null)
         {
+            _logger.LogWarning("Create review failed: Book with Id: {BookId} not found for user {Username}",
+                createReviewDto.BookId, username);
             return BadRequest($"Book with ID {createReviewDto.BookId} does not exist.");
         }
 
@@ -77,10 +91,21 @@ public class ReviewsController : ControllerBase
     [Authorize(Roles = "ReadWrite")]
     public async Task<ActionResult<ReviewDto>> UpdateReview(int id, [FromBody] UpdateReviewDto updateReviewDto)
     {
+        var username = User.Identity?.Name ?? "Unknown";
+
+        if (!ModelState.IsValid)
+        {
+            _logger.LogWarning("Invalid model state for UpdateReview by user {Username}, ReviewId: {ReviewId}",
+                username, id);
+            return BadRequest(ModelState);
+        }
+
         var review = await _reviewService.UpdateReviewAsync(id, updateReviewDto);
 
         if (review == null)
         {
+            _logger.LogWarning("Update failed: Review with Id: {ReviewId} not found for user {Username}",
+                id, username);
             return NotFound();
         }
 
@@ -98,6 +123,9 @@ public class ReviewsController : ControllerBase
 
         if (!result)
         {
+            var username = User.Identity?.Name ?? "Unknown";
+            _logger.LogWarning("Delete failed: Review with Id: {ReviewId} not found for user {Username}",
+                id, username);
             return NotFound();
         }
 

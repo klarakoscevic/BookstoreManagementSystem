@@ -3,6 +3,7 @@ using BookstoreManagementSystem.Models;
 using BookstoreManagementSystem.Repositories;
 using BookstoreManagementSystem.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace BookstoreManagementSystem.Tests.UnitTests;
@@ -10,12 +11,14 @@ namespace BookstoreManagementSystem.Tests.UnitTests;
 public class BookServiceTests
 {
     private readonly Mock<IBookRepository> _mockBookRepository;
+    private readonly Mock<ILogger<BookService>> _mockLogger;
     private readonly BookService _bookService;
 
     public BookServiceTests()
     {
         _mockBookRepository = new Mock<IBookRepository>();
-        _bookService = new BookService(_mockBookRepository.Object);
+        _mockLogger = new Mock<ILogger<BookService>>();
+        _bookService = new BookService(_mockBookRepository.Object, _mockLogger.Object);
     }
 
     [Fact]

@@ -14,28 +14,33 @@ public class AuthService : IAuthService
 {
     private readonly BookstoreDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(BookstoreDbContext context, IConfiguration configuration)
+    public AuthService(BookstoreDbContext context, IConfiguration configuration, ILogger<AuthService> logger)
     {
         _context = context;
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task<AuthResponseDto?> RegisterAsync(RegisterDto registerDto)
     {
         if (await _context.Users.AnyAsync(u => u.Username == registerDto.Username))
         {
+            _logger.LogWarning("Registration failed: Username {Username} already exists", registerDto.Username);
             return null;
         }
 
         if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
         {
+            _logger.LogWarning("Registration failed: Email {Email} already exists", registerDto.Email);
             return null;
         }
 
         var readRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Read");
         if (readRole == null)
         {
+            _logger.LogError("Registration failed: Read role not found in database");
             throw new InvalidOperationException("Read role not found in database");
         }
 
@@ -73,11 +78,13 @@ public class AuthService : IAuthService
 
         if (user == null)
         {
+            _logger.LogWarning("Login failed: User {Username} not found or inactive", loginDto.Username);
             return null;
         }
 
         if (!VerifyPassword(loginDto.Password, user.PasswordHash))
         {
+            _logger.LogWarning("Login failed: Invalid password for user {Username}", loginDto.Username);
             return null;
         }
 
@@ -94,6 +101,9 @@ public class AuthService : IAuthService
 
     public string GenerateJwtToken(int userId, string username, string role)
     {
+        _logger.LogDebug("Generating JWT token for UserId: {UserId}, Username: {Username}, Role: {Role}",
+            userId, username, role);
+
         var jwtSettings = _configuration.GetSection("JwtSettings");
         var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not configured");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));

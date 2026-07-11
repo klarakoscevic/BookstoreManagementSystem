@@ -7,10 +7,12 @@ namespace BookstoreManagementSystem.Middleware;
 public class AuthErrorHandlingMiddleware
 {
     private readonly RequestDelegate _next;
+    private readonly ILogger<AuthErrorHandlingMiddleware> _logger;
 
-    public AuthErrorHandlingMiddleware(RequestDelegate next)
+    public AuthErrorHandlingMiddleware(RequestDelegate next, ILogger<AuthErrorHandlingMiddleware> logger)
     {
         _next = next;
+        _logger = logger;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -33,6 +35,9 @@ public class AuthErrorHandlingMiddleware
             {
                 if (context.Response.StatusCode == (int)HttpStatusCode.Unauthorized && responseBody.Length == 0)
                 {
+                    _logger.LogWarning("Unauthorized access attempt to {Path} from {ClientIP}", 
+                        context.Request.Path, context.Connection.RemoteIpAddress);
+
                     context.Response.ContentType = "application/json";
                     var response = new
                     {
@@ -45,6 +50,10 @@ public class AuthErrorHandlingMiddleware
                 }
                 else if (context.Response.StatusCode == (int)HttpStatusCode.Forbidden && responseBody.Length == 0)
                 {
+                    var username = context.User?.Identity?.Name ?? "Unknown";
+                    _logger.LogWarning("Forbidden access by user {Username} to {Path}", 
+                        username, context.Request.Path);
+
                     context.Response.ContentType = "application/json";
                     var response = new
                     {
@@ -60,6 +69,11 @@ public class AuthErrorHandlingMiddleware
             // Copy the buffered response back to the original stream
             responseBody.Seek(0, SeekOrigin.Begin);
             await responseBody.CopyToAsync(originalBodyStream);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred processing request to {Path}", context.Request.Path);
+            throw;
         }
         finally
         {

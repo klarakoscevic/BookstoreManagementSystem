@@ -7,10 +7,12 @@ namespace BookstoreManagementSystem.Services;
 public class ReviewService : IReviewService
 {
     private readonly IReviewRepository _reviewRepository;
+    private readonly ILogger<ReviewService> _logger;
 
-    public ReviewService(IReviewRepository reviewRepository)
+    public ReviewService(IReviewRepository reviewRepository, ILogger<ReviewService> logger)
     {
         _reviewRepository = reviewRepository;
+        _logger = logger;
     }
 
     public async Task<List<ReviewDto>> GetAllReviewsAsync()
@@ -28,7 +30,14 @@ public class ReviewService : IReviewService
     public async Task<ReviewDto?> GetReviewByIdAsync(int id)
     {
         var review = await _reviewRepository.GetReviewByIdAsync(id);
-        return review == null ? null : MapToDto(review);
+
+        if (review == null)
+        {
+            _logger.LogWarning("Review with Id: {ReviewId} not found", id);
+            return null;
+        }
+
+        return MapToDto(review);
     }
 
     public async Task<ReviewDto?> CreateReviewAsync(CreateReviewDto createReviewDto)
@@ -41,22 +50,42 @@ public class ReviewService : IReviewService
         };
 
         var createdReview = await _reviewRepository.CreateReviewAsync(review);
-        return createdReview == null ? null : MapToDto(createdReview);
+
+        if (createdReview == null)
+        {
+            _logger.LogWarning("Failed to create review: Book with Id: {BookId} not found", createReviewDto.BookId);
+            return null;
+        }
+
+        return MapToDto(createdReview);
     }
 
     public async Task<ReviewDto?> UpdateReviewAsync(int id, UpdateReviewDto updateReviewDto)
     {
         var review = await _reviewRepository.UpdateReviewAsync(
-            id,
-            updateReviewDto.Rating,
-            updateReviewDto.Description);
+              id,
+              updateReviewDto.Rating,
+              updateReviewDto.Description);
 
-        return review == null ? null : MapToDto(review);
+        if (review == null)
+        {
+            _logger.LogWarning("Failed to update review: Review with Id: {ReviewId} not found", id);
+            return null;
+        }
+
+        return MapToDto(review);
     }
 
     public async Task<bool> DeleteReviewAsync(int id)
     {
-        return await _reviewRepository.DeleteReviewAsync(id);
+        var result = await _reviewRepository.DeleteReviewAsync(id);
+
+        if (!result)
+        {
+            _logger.LogWarning("Failed to delete review: Review with Id: {ReviewId} not found", id);
+        }
+
+        return result;
     }
 
     private static ReviewDto MapToDto(Review review)

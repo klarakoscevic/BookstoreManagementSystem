@@ -11,10 +11,12 @@ namespace BookstoreManagementSystem.Controllers;
 public class GenresController : ControllerBase
 {
     private readonly IGenreService _genreService;
+    private readonly ILogger<GenresController> _logger;
 
-    public GenresController(IGenreService genreService)
+    public GenresController(IGenreService genreService, ILogger<GenresController> logger)
     {
         _genreService = genreService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -36,7 +38,11 @@ public class GenresController : ControllerBase
         var genre = await _genreService.GetGenreByIdAsync(id);
 
         if (genre == null)
+        {
+            var username = User.Identity?.Name ?? "Unknown";
+            _logger.LogWarning("Genre with Id: {GenreId} not found for user {Username}", id, username);
             return NotFound(new { message = $"Genre with ID {id} not found" });
+        }
 
         return Ok(genre);
     }
@@ -48,9 +54,15 @@ public class GenresController : ControllerBase
     [Authorize(Roles = "ReadWrite")]
     public async Task<ActionResult<GenreDto>> CreateGenre([FromBody] CreateGenreDto createGenreDto)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+        var username = User.Identity?.Name ?? "Unknown";
 
+        if (!ModelState.IsValid)
+        {
+            _logger.LogWarning("Invalid model state for CreateGenre by user {Username}", username);
+            return BadRequest(ModelState);
+        }
+
+        _logger.LogInformation("User {Username} creating new genre: {GenreName}", username, createGenreDto.Name);
         var genre = await _genreService.CreateGenreAsync(createGenreDto);
         return CreatedAtAction(nameof(GetGenre), new { id = genre.Id }, genre);
     }
@@ -62,11 +74,17 @@ public class GenresController : ControllerBase
     [Authorize(Roles = "ReadWrite")]
     public async Task<IActionResult> DeleteGenre(int id)
     {
+        var username = User.Identity?.Name ?? "Unknown";
+
         var result = await _genreService.DeleteGenreAsync(id);
 
         if (!result)
+        {
+            _logger.LogWarning("Delete failed: Genre with Id: {GenreId} not found for user {Username}", id, username);
             return NotFound(new { message = $"Genre with ID {id} not found" });
+        }
 
+        _logger.LogInformation("User {Username} successfully deleted genre Id: {GenreId}", username, id);
         return NoContent();
     }
 }

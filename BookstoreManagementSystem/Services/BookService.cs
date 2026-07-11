@@ -7,10 +7,12 @@ namespace BookstoreManagementSystem.Services;
 public class BookService : IBookService
 {
     private readonly IBookRepository _bookRepository;
+    private readonly ILogger<BookService> _logger;
 
-    public BookService(IBookRepository bookRepository)
+    public BookService(IBookRepository bookRepository, ILogger<BookService> logger)
     {
         _bookRepository = bookRepository;
+        _logger = logger;
     }
 
     public async Task<List<BookDto>> GetAllBooksAsync()
@@ -22,7 +24,14 @@ public class BookService : IBookService
     public async Task<BookDto?> GetBookByIdAsync(int id)
     {
         var book = await _bookRepository.GetBookByIdAsync(id);
-        return book == null ? null : MapToDto(book);
+
+        if (book == null)
+        {
+            _logger.LogWarning("Book with Id: {BookId} not found", id);
+            return null;
+        }
+
+        return MapToDto(book);
     }
 
     public async Task<BookDto> CreateBookAsync(CreateBookDto createBookDto)
@@ -42,12 +51,26 @@ public class BookService : IBookService
     public async Task<BookDto?> UpdateBookPriceAsync(int id, UpdateBookPriceDto updateBookPriceDto)
     {
         var book = await _bookRepository.UpdateBookPriceAsync(id, updateBookPriceDto.Price);
-        return book == null ? null : MapToDto(book);
+
+        if (book == null)
+        {
+            _logger.LogWarning("Failed to update book price: Book with Id: {BookId} not found", id);
+            return null;
+        }
+
+        return MapToDto(book);
     }
 
     public async Task<bool> DeleteBookAsync(int id)
     {
-        return await _bookRepository.DeleteBookAsync(id);
+        var result = await _bookRepository.DeleteBookAsync(id);
+
+        if (!result)
+        {
+            _logger.LogWarning("Failed to delete book: Book with Id: {BookId} not found", id);
+        }
+
+        return result;
     }
 
     public async Task<List<TopBookDto>> GetTop10BooksByRatingAsync()
@@ -64,8 +87,8 @@ public class BookService : IBookService
             Price = book.Price,
             AuthorNames = book.Authors.Select(a => a.Name).ToList(),
             GenreNames = book.Genres.Select(g => g.Name).ToList(),
-            AverageReviewRating = book.Reviews.Any() 
-                ? book.Reviews.Average(r => r.Rating) 
+            AverageReviewRating = book.Reviews.Any()
+                ? book.Reviews.Average(r => r.Rating)
                 : 0
         };
     }

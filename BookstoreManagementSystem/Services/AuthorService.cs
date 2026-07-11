@@ -7,10 +7,12 @@ namespace BookstoreManagementSystem.Services;
 public class AuthorService : IAuthorService
 {
     private readonly IAuthorRepository _authorRepository;
+    private readonly ILogger<AuthorService> _logger;
 
-    public AuthorService(IAuthorRepository authorRepository)
+    public AuthorService(IAuthorRepository authorRepository, ILogger<AuthorService> logger)
     {
         _authorRepository = authorRepository;
+        _logger = logger;
     }
 
     public async Task<List<AuthorDto>> GetAllAuthorsAsync()
@@ -22,7 +24,14 @@ public class AuthorService : IAuthorService
     public async Task<AuthorDto?> GetAuthorByIdAsync(int id)
     {
         var author = await _authorRepository.GetAuthorByIdAsync(id);
-        return author == null ? null : MapToDto(author);
+
+        if (author == null)
+        {
+            _logger.LogWarning("Author with Id: {AuthorId} not found", id);
+            return null;
+        }
+
+        return MapToDto(author);
     }
 
     public async Task<AuthorDto> CreateAuthorAsync(CreateAuthorDto createAuthorDto)
@@ -39,7 +48,14 @@ public class AuthorService : IAuthorService
 
     public async Task<bool> DeleteAuthorAsync(int id)
     {
-        return await _authorRepository.DeleteAuthorAsync(id);
+        var result = await _authorRepository.DeleteAuthorAsync(id);
+
+        if (!result)
+        {
+            _logger.LogWarning("Failed to delete author: Author with Id: {AuthorId} not found", id);
+        }
+
+        return result;
     }
 
     private static AuthorDto MapToDto(Author author)

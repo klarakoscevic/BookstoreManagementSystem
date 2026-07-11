@@ -2,6 +2,7 @@ using BookstoreManagementSystem.DTOs;
 using BookstoreManagementSystem.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace BookstoreManagementSystem.Controllers;
 
@@ -11,10 +12,12 @@ namespace BookstoreManagementSystem.Controllers;
 public class BooksController : ControllerBase
 {
     private readonly IBookService _bookService;
+    private readonly ILogger<BooksController> _logger;
 
-    public BooksController(IBookService bookService)
+    public BooksController(IBookService bookService, ILogger<BooksController> logger)
     {
         _bookService = bookService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -46,7 +49,11 @@ public class BooksController : ControllerBase
         var book = await _bookService.GetBookByIdAsync(id);
 
         if (book == null)
+        {
+            var username = User.Identity?.Name ?? "Unknown";
+            _logger.LogWarning("Book with Id: {BookId} not found for user {Username}", id, username);
             return NotFound(new { message = $"Book with ID {id} not found" });
+        }
 
         return Ok(book);
     }
@@ -58,8 +65,14 @@ public class BooksController : ControllerBase
     [Authorize(Roles = "ReadWrite")]
     public async Task<ActionResult<BookDto>> CreateBook([FromBody] CreateBookDto createBookDto)
     {
+
         if (!ModelState.IsValid)
+        {
+            var username = User.Identity?.Name ?? "Unknown";
+            _logger.LogWarning("Invalid model state for CreateBook by user {Username}: {ValidationErrors}",
+    username, ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
             return BadRequest(ModelState);
+        }
 
         var book = await _bookService.CreateBookAsync(createBookDto);
         return CreatedAtAction(nameof(GetBook), new { id = book.Id }, book);
@@ -72,13 +85,22 @@ public class BooksController : ControllerBase
     [Authorize(Roles = "ReadWrite")]
     public async Task<ActionResult<BookDto>> UpdateBookPrice(int id, [FromBody] UpdateBookPriceDto updateBookPriceDto)
     {
+        var username = User.Identity?.Name ?? "Unknown";
+
         if (!ModelState.IsValid)
+        {
+            _logger.LogWarning("Invalid model state for UpdateBookPrice by user {Username}, BookId: {BookId}",
+                username, id);
             return BadRequest(ModelState);
+        }
 
         var book = await _bookService.UpdateBookPriceAsync(id, updateBookPriceDto);
 
         if (book == null)
+        {
+            _logger.LogWarning("Update failed: Book with Id: {BookId} not found for user {Username}", id, username);
             return NotFound(new { message = $"Book with ID {id} not found" });
+        }
 
         return Ok(book);
     }
@@ -93,7 +115,11 @@ public class BooksController : ControllerBase
         var result = await _bookService.DeleteBookAsync(id);
 
         if (!result)
+        {
+            var username = User.Identity?.Name ?? "Unknown";
+            _logger.LogWarning("Delete failed: Book with Id: {BookId} not found for user {Username}", id, username);
             return NotFound(new { message = $"Book with ID {id} not found" });
+        }
 
         return NoContent();
     }

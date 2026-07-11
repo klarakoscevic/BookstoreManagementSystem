@@ -5,6 +5,8 @@ using BookstoreManagementSystem.Services;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Moq;
 using Xunit;
 
 namespace BookstoreManagementSystem.Tests.UnitTests;
@@ -13,6 +15,7 @@ public class AuthServiceTests
 {
     private readonly DbContextOptions<BookstoreDbContext> _dbContextOptions;
     private readonly IConfiguration _configuration;
+    private readonly Mock<ILogger<AuthService>> _mockLogger;
 
     public AuthServiceTests()
     {
@@ -32,6 +35,8 @@ public class AuthServiceTests
         _configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(inMemorySettings!)
             .Build();
+
+        _mockLogger = new Mock<ILogger<AuthService>>();
     }
 
     private BookstoreDbContext CreateContext()
@@ -56,7 +61,7 @@ public class AuthServiceTests
     {
         // Arrange
         using var context = CreateContext();
-        var authService = new AuthService(context, _configuration);
+        var authService = new AuthService(context, _configuration, _mockLogger.Object);
         var registerDto = new RegisterDto
         {
             Username = "testuser",
@@ -97,7 +102,7 @@ public class AuthServiceTests
         });
         await context.SaveChangesAsync();
 
-        var authService = new AuthService(context, _configuration);
+        var authService = new AuthService(context, _configuration, _mockLogger.Object);
         var registerDto = new RegisterDto
         {
             Username = "existinguser",
@@ -129,7 +134,7 @@ public class AuthServiceTests
         });
         await context.SaveChangesAsync();
 
-        var authService = new AuthService(context, _configuration);
+        var authService = new AuthService(context, _configuration, _mockLogger.Object);
         var registerDto = new RegisterDto
         {
             Username = "newuser",
@@ -149,7 +154,7 @@ public class AuthServiceTests
     {
         // Arrange
         using var context = CreateContext();
-        var authService = new AuthService(context, _configuration);
+        var authService = new AuthService(context, _configuration, _mockLogger.Object);
 
         // First register a user
         var registerDto = new RegisterDto
@@ -182,7 +187,7 @@ public class AuthServiceTests
     {
         // Arrange
         using var context = CreateContext();
-        var authService = new AuthService(context, _configuration);
+        var authService = new AuthService(context, _configuration, _mockLogger.Object);
         var loginDto = new LoginDto
         {
             Username = "nonexistentuser",
@@ -201,7 +206,7 @@ public class AuthServiceTests
     {
         // Arrange
         using var context = CreateContext();
-        var authService = new AuthService(context, _configuration);
+        var authService = new AuthService(context, _configuration, _mockLogger.Object);
 
         // First register a user
         var registerDto = new RegisterDto
@@ -230,7 +235,7 @@ public class AuthServiceTests
     {
         // Arrange
         using var context = CreateContext();
-        var authService = new AuthService(context, _configuration);
+        var authService = new AuthService(context, _configuration, _mockLogger.Object);
 
         // First register a user, then deactivate them
         var registerDto = new RegisterDto
@@ -264,7 +269,7 @@ public class AuthServiceTests
     {
         // Arrange
         using var context = CreateContext();
-        var authService = new AuthService(context, _configuration);
+        var authService = new AuthService(context, _configuration, _mockLogger.Object);
         var registerDto = new RegisterDto
         {
             Username = "roleuser",
@@ -289,7 +294,7 @@ public class AuthServiceTests
     {
         // Arrange
         using var context = CreateContext();
-        var authService = new AuthService(context, _configuration);
+        var authService = new AuthService(context, _configuration, _mockLogger.Object);
         var registerDto = new RegisterDto
         {
             Username = "hashuser",
@@ -314,7 +319,7 @@ public class AuthServiceTests
     {
         // Arrange
         using var context = CreateContext();
-        var authService = new AuthService(context, _configuration);
+        var authService = new AuthService(context, _configuration, _mockLogger.Object);
         var password = "TestPassword123";
 
         var registerDto1 = new RegisterDto
@@ -349,7 +354,7 @@ public class AuthServiceTests
     {
         // Arrange
         using var context = CreateContext();
-        var authService = new AuthService(context, _configuration);
+        var authService = new AuthService(context, _configuration, _mockLogger.Object);
 
         var registerDto = new RegisterDto
         {

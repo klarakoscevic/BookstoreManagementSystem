@@ -3,6 +3,7 @@ using BookstoreManagementSystem.Models;
 using BookstoreManagementSystem.Repositories;
 using BookstoreManagementSystem.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace BookstoreManagementSystem.Tests.UnitTests;
@@ -10,12 +11,14 @@ namespace BookstoreManagementSystem.Tests.UnitTests;
 public class GenreServiceTests
 {
     private readonly Mock<IGenreRepository> _mockGenreRepository;
+    private readonly Mock<ILogger<GenreService>> _mockLogger;
     private readonly GenreService _genreService;
 
     public GenreServiceTests()
     {
         _mockGenreRepository = new Mock<IGenreRepository>();
-        _genreService = new GenreService(_mockGenreRepository.Object);
+        _mockLogger = new Mock<ILogger<GenreService>>();
+        _genreService = new GenreService(_mockGenreRepository.Object, _mockLogger.Object);
     }
 
     [Fact]
