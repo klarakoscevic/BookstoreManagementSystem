@@ -30,6 +30,18 @@ public class AuthorRepository : IAuthorRepository
         return author;
     }
 
+    public async Task<Author?> UpdateAuthorAsync(Author author)
+    {
+        var existingAuthor = await _context.Authors.FindAsync(author.Id);
+        if (existingAuthor == null)
+            return null;
+
+        existingAuthor.Name = author.Name;
+        existingAuthor.YearOfBirth = author.YearOfBirth;
+        await _context.SaveChangesAsync();
+        return existingAuthor;
+    }
+
     public async Task<bool> DeleteAuthorAsync(int id)
     {
         var author = await _context.Authors.FindAsync(id);

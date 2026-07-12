@@ -68,6 +68,35 @@ public class GenresController : ControllerBase
     }
 
     /// <summary>
+    /// Update an existing genre
+    /// </summary>
+    [HttpPut("{id}")]
+    [Authorize(Roles = "ReadWrite")]
+    public async Task<ActionResult<GenreDto>> UpdateGenre(int id, [FromBody] UpdateGenreDto updateGenreDto)
+    {
+        var username = User.Identity?.Name ?? "Unknown";
+
+        if (!ModelState.IsValid)
+        {
+            _logger.LogWarning("Invalid model state for UpdateGenre by user {Username}, GenreId: {GenreId}",
+                username, id);
+            return BadRequest(ModelState);
+        }
+
+        var genre = await _genreService.UpdateGenreAsync(id, updateGenreDto);
+
+        if (genre == null)
+        {
+            _logger.LogWarning("Update failed: Genre with Id: {GenreId} not found for user {Username}",
+                id, username);
+            return NotFound(new { message = $"Genre with ID {id} not found" });
+        }
+
+        _logger.LogInformation("User {Username} successfully updated genre Id: {GenreId}", username, id);
+        return Ok(genre);
+    }
+
+    /// <summary>
     /// Delete a genre (soft delete)
     /// </summary>
     [HttpDelete("{id}")]

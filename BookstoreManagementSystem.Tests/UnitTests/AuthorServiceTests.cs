@@ -132,6 +132,59 @@ public class AuthorServiceTests
     }
 
     [Fact]
+    public async Task UpdateAuthorAsync_WhenAuthorExists_ShouldReturnUpdatedAuthorDto()
+    {
+        // Arrange
+        var updateDto = new UpdateAuthorDto
+        {
+            Name = "Updated Author",
+            YearOfBirth = 1980
+        };
+
+        var updatedAuthor = new Author
+        {
+            Id = 1,
+            Name = "Updated Author",
+            YearOfBirth = 1980
+        };
+
+        _mockAuthorRepository.Setup(r => r.UpdateAuthorAsync(It.IsAny<Author>()))
+            .ReturnsAsync(updatedAuthor);
+
+        // Act
+        var result = await _authorService.UpdateAuthorAsync(1, updateDto);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(1);
+        result.Name.Should().Be("Updated Author");
+        result.YearOfBirth.Should().Be(1980);
+        _mockAuthorRepository.Verify(r => r.UpdateAuthorAsync(It.Is<Author>(a => 
+            a.Id == 1 && a.Name == "Updated Author" && a.YearOfBirth == 1980)), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateAuthorAsync_WhenAuthorDoesNotExist_ShouldReturnNull()
+    {
+        // Arrange
+        var updateDto = new UpdateAuthorDto
+        {
+            Name = "Updated Author",
+            YearOfBirth = 1980
+        };
+
+        _mockAuthorRepository.Setup(r => r.UpdateAuthorAsync(It.IsAny<Author>()))
+            .ReturnsAsync((Author?)null);
+
+        // Act
+        var result = await _authorService.UpdateAuthorAsync(999, updateDto);
+
+        // Assert
+        result.Should().BeNull();
+        _mockAuthorRepository.Verify(r => r.UpdateAuthorAsync(It.Is<Author>(a => a.Id == 999)), Times.Once);
+    }
+
+    [Fact]
     public async Task DeleteAuthorAsync_WhenAuthorExists_ShouldReturnTrue()
     {
         // Arrange

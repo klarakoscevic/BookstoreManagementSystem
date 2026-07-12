@@ -67,6 +67,35 @@ public class AuthorsController : ControllerBase
     }
 
     /// <summary>
+    /// Update an existing author
+    /// </summary>
+    [HttpPut("{id}")]
+    [Authorize(Roles = "ReadWrite")]
+    public async Task<ActionResult<AuthorDto>> UpdateAuthor(int id, [FromBody] UpdateAuthorDto updateAuthorDto)
+    {
+        var username = User.Identity?.Name ?? "Unknown";
+
+        if (!ModelState.IsValid)
+        {
+            _logger.LogWarning("Invalid model state for UpdateAuthor by user {Username}, AuthorId: {AuthorId}",
+                username, id);
+            return BadRequest(ModelState);
+        }
+
+        var author = await _authorService.UpdateAuthorAsync(id, updateAuthorDto);
+
+        if (author == null)
+        {
+            _logger.LogWarning("Update failed: Author with Id: {AuthorId} not found for user {Username}",
+                id, username);
+            return NotFound(new { message = $"Author with ID {id} not found" });
+        }
+
+        _logger.LogInformation("User {Username} successfully updated author Id: {AuthorId}", username, id);
+        return Ok(author);
+    }
+
+    /// <summary>
     /// Delete an author (soft delete)
     /// </summary>
     [HttpDelete("{id}")]

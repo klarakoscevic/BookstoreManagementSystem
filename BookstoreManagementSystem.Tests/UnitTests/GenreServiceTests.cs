@@ -125,6 +125,54 @@ public class GenreServiceTests
     }
 
     [Fact]
+    public async Task UpdateGenreAsync_WhenGenreExists_ShouldReturnUpdatedGenreDto()
+    {
+        // Arrange
+        var updateDto = new UpdateGenreDto
+        {
+            Name = "Updated Genre"
+        };
+
+        var updatedGenre = new Genre
+        {
+            Id = 1,
+            Name = "Updated Genre"
+        };
+
+        _mockGenreRepository.Setup(r => r.UpdateGenreAsync(It.IsAny<Genre>()))
+            .ReturnsAsync(updatedGenre);
+
+        // Act
+        var result = await _genreService.UpdateGenreAsync(1, updateDto);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(1);
+        result.Name.Should().Be("Updated Genre");
+        _mockGenreRepository.Verify(r => r.UpdateGenreAsync(It.Is<Genre>(g => g.Id == 1 && g.Name == "Updated Genre")), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateGenreAsync_WhenGenreDoesNotExist_ShouldReturnNull()
+    {
+        // Arrange
+        var updateDto = new UpdateGenreDto
+        {
+            Name = "Updated Genre"
+        };
+
+        _mockGenreRepository.Setup(r => r.UpdateGenreAsync(It.IsAny<Genre>()))
+            .ReturnsAsync((Genre?)null);
+
+        // Act
+        var result = await _genreService.UpdateGenreAsync(999, updateDto);
+
+        // Assert
+        result.Should().BeNull();
+        _mockGenreRepository.Verify(r => r.UpdateGenreAsync(It.Is<Genre>(g => g.Id == 999)), Times.Once);
+    }
+
+    [Fact]
     public async Task DeleteGenreAsync_WhenGenreExists_ShouldReturnTrue()
     {
         // Arrange

@@ -46,6 +46,25 @@ public class GenreService : IGenreService
         return MapToDto(createdGenre);
     }
 
+    public async Task<GenreDto?> UpdateGenreAsync(int id, UpdateGenreDto updateGenreDto)
+    {
+        var genre = new Genre
+        {
+            Id = id,
+            Name = updateGenreDto.Name
+        };
+
+        var updatedGenre = await _genreRepository.UpdateGenreAsync(genre);
+
+        if (updatedGenre == null)
+        {
+            _logger.LogWarning("Failed to update genre: Genre with Id: {GenreId} not found", id);
+            return null;
+        }
+
+        return MapToDto(updatedGenre);
+    }
+
     public async Task<bool> DeleteGenreAsync(int id)
     {
         var result = await _genreRepository.DeleteGenreAsync(id);

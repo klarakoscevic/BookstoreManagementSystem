@@ -84,6 +84,62 @@ public class GenresControllerIntegrationTests : IntegrationTestBase
     }
 
     [Fact]
+    public async Task UpdateGenre_WithValidData_AsAdmin_ShouldUpdateGenre()
+    {
+        // Arrange
+        await AuthenticateAsync(asAdmin: true);
+
+        var updateGenreDto = new UpdateGenreDto
+        {
+            Name = "Updated Fiction"
+        };
+
+        // Act
+        var response = await Client.PutAsJsonAsync("/api/genres/1", updateGenreDto);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var updatedGenre = await response.Content.ReadFromJsonAsync<GenreDto>();
+        updatedGenre.Should().NotBeNull();
+        updatedGenre!.Id.Should().Be(1);
+        updatedGenre.Name.Should().Be("Updated Fiction");
+    }
+
+    [Fact]
+    public async Task UpdateGenre_WithInvalidId_AsAdmin_ShouldReturnNotFound()
+    {
+        // Arrange
+        await AuthenticateAsync(asAdmin: true);
+
+        var updateGenreDto = new UpdateGenreDto
+        {
+            Name = "Updated Genre"
+        };
+
+        // Act
+        var response = await Client.PutAsJsonAsync("/api/genres/999", updateGenreDto);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task UpdateGenre_AsReadUser_ShouldReturnForbidden()
+    {
+        // Arrange
+        var updateGenreDto = new UpdateGenreDto
+        {
+            Name = "Updated Fiction"
+        };
+
+        // Act
+        var response = await Client.PutAsJsonAsync("/api/genres/1", updateGenreDto);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
     public async Task DeleteGenre_WithValidId_AsAdmin_ShouldSoftDeleteGenre()
     {
         // Arrange

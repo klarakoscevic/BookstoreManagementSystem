@@ -46,6 +46,26 @@ public class AuthorService : IAuthorService
         return MapToDto(createdAuthor);
     }
 
+    public async Task<AuthorDto?> UpdateAuthorAsync(int id, UpdateAuthorDto updateAuthorDto)
+    {
+        var author = new Author
+        {
+            Id = id,
+            Name = updateAuthorDto.Name,
+            YearOfBirth = updateAuthorDto.YearOfBirth
+        };
+
+        var updatedAuthor = await _authorRepository.UpdateAuthorAsync(author);
+
+        if (updatedAuthor == null)
+        {
+            _logger.LogWarning("Failed to update author: Author with Id: {AuthorId} not found", id);
+            return null;
+        }
+
+        return MapToDto(updatedAuthor);
+    }
+
     public async Task<bool> DeleteAuthorAsync(int id)
     {
         var result = await _authorRepository.DeleteAuthorAsync(id);

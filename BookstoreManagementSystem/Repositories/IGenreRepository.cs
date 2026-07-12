@@ -7,6 +7,7 @@ public interface IGenreRepository
     Task<List<Genre>> GetAllGenresAsync();
     Task<Genre?> GetGenreByIdAsync(int id);
     Task<Genre> CreateGenreAsync(Genre genre);
+    Task<Genre?> UpdateGenreAsync(Genre genre);
     Task<bool> DeleteGenreAsync(int id);
     Task<bool> GenreExistsAsync(int id);
 }

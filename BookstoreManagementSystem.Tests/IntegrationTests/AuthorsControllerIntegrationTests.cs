@@ -86,6 +86,66 @@ public class AuthorsControllerIntegrationTests : IntegrationTestBase
     }
 
     [Fact]
+    public async Task UpdateAuthor_WithValidData_AsAdmin_ShouldUpdateAuthor()
+    {
+        // Arrange
+        await AuthenticateAsync(asAdmin: true);
+
+        var updateAuthorDto = new UpdateAuthorDto
+        {
+            Name = "Updated Author Name",
+            YearOfBirth = 1970
+        };
+
+        // Act
+        var response = await Client.PutAsJsonAsync("/api/authors/1", updateAuthorDto);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var updatedAuthor = await response.Content.ReadFromJsonAsync<AuthorDto>();
+        updatedAuthor.Should().NotBeNull();
+        updatedAuthor!.Id.Should().Be(1);
+        updatedAuthor.Name.Should().Be("Updated Author Name");
+        updatedAuthor.YearOfBirth.Should().Be(1970);
+    }
+
+    [Fact]
+    public async Task UpdateAuthor_WithInvalidId_AsAdmin_ShouldReturnNotFound()
+    {
+        // Arrange
+        await AuthenticateAsync(asAdmin: true);
+
+        var updateAuthorDto = new UpdateAuthorDto
+        {
+            Name = "Updated Author",
+            YearOfBirth = 1970
+        };
+
+        // Act
+        var response = await Client.PutAsJsonAsync("/api/authors/999", updateAuthorDto);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task UpdateAuthor_AsReadUser_ShouldReturnForbidden()
+    {
+        // Arrange
+        var updateAuthorDto = new UpdateAuthorDto
+        {
+            Name = "Updated Author Name",
+            YearOfBirth = 1970
+        };
+
+        // Act
+        var response = await Client.PutAsJsonAsync("/api/authors/1", updateAuthorDto);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
     public async Task DeleteAuthor_WithValidId_AsAdmin_ShouldSoftDeleteAuthor()
     {
         // Arrange
