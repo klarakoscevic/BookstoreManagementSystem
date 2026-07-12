@@ -34,8 +34,12 @@ try
     builder.Host.UseSerilog();
 
     // Add services to the container.
-    builder.Services.AddDbContext<BookstoreDbContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    // For integration tests, the database will be configured by the WebApplicationFactory
+    if (builder.Environment.EnvironmentName != "Testing")
+    {
+        builder.Services.AddDbContext<BookstoreDbContext>(options =>
+            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    }
 
     // Register repositories
     builder.Services.AddScoped<IGenreRepository, GenreRepository>();
@@ -150,27 +154,35 @@ try
 
     var app = builder.Build();
 
-    // Apply migrations automatically on startup
-    using (var scope = app.Services.CreateScope())
+    // Apply migrations automatically on startup (skip for integration tests)
+    var environment = app.Environment.EnvironmentName;
+    if (environment != "Testing")
     {
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        var dbContext = scope.ServiceProvider.GetRequiredService<BookstoreDbContext>();
-
-        try
+        using (var scope = app.Services.CreateScope())
         {
-            logger.LogInformation("Applying database migrations...");
-            dbContext.Database.Migrate();
-            logger.LogInformation("Database migrations applied successfully");
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<BookstoreDbContext>();
 
-            // Seed initial data
-            await SeedData.InitializeAsync(scope.ServiceProvider);
-            logger.LogInformation("Database seeding completed");
+            try
+            {
+                logger.LogInformation("Applying database migrations...");
+                dbContext.Database.Migrate();
+                logger.LogInformation("Database migrations applied successfully");
+
+                // Seed initial data
+                await SeedData.InitializeAsync(scope.ServiceProvider);
+                logger.LogInformation("Database seeding completed");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "An error occurred while migrating the database");
+                throw;
+            }
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "An error occurred while migrating the database");
-            throw;
-        }
+    }
+    else
+    {
+        app.Logger.LogInformation("Running in Testing environment, skipping migrations and seeding");
     }
 
     // Configure the HTTP request pipeline.
@@ -217,3 +229,6 @@ finally
 {
     Log.CloseAndFlush();
 }
+
+// Make the Program class accessible to integration tests
+public partial class Program { }
